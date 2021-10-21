@@ -14,6 +14,7 @@ import time
 import os
 import sys
 
+
 ## 窗口类
 class myMainWindow(Ui_MainWindow, QMainWindow):
     css = ""
@@ -22,6 +23,7 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
     def __init__(self, worker_id=0):
         # 窗口初始化
         super(Ui_MainWindow, self).__init__()
+
         self.setupUi(self)
         # 槽函数
         self.btn_label_pic.clicked.connect(self.open_picture)
@@ -36,6 +38,7 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
         self.btn_close_camera.clicked.connect(self.closeCamera)
 
         #  初始化：获取id、是否打开文件、画笔
+        self.camera = False
         self.worker_id = worker_id
         self.open_flag = False
         self.timeF = 25
@@ -45,48 +48,38 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
         self.i_processor = img_processor()
         self.bar_btn = []
 
-    ## 打开摄像头
+    # 打开摄像头
     def openCamera(self):
         try:
-            self.video_stream = cv2.VideoCapture("http://admin:admin@10.2.63.76:8081/")
-            # TODO 视频文件默认保存
-            self.fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            # 视频文件保存路径
+            self.video_stream = cv2.VideoCapture("http://admin:admin@10.2.63.76:8081/")     # 获取摄像头视频
+            self.fourcc = cv2.VideoWriter_fourcc(*'XVID')                                   # 实时视频存储地址
             self.out = cv2.VideoWriter("output.avi", self.fourcc, 30.0, (640, 480))
-            # frame_num = self.video_stream.get(7)
-            self.probar_load.setMaximum(1000)
+            # TODO 视频文件默认保存
+            # self.probar_load.setMaximum(1000)
             # 打开视频后初始视频信息设置：打开文件、计数帧
             self.open_flag = True
+            self.camera = True
             self.frame_index = 0
-            self.saveVideo()
-            """
-            # 存储视频
-            while (self.video_stream.isOpened()):
-                ret, frame = self.video_stream.read()
-                if ret == True:
-                    self.out.write(frame)
-                else:
-                    break
-            """
 
         except:
             print("open")
 
-    ## 关闭摄像头
+    # 关闭摄像头
     def closeCamera(self):
         try:
             self.video_stream.release()
             self.out.release()
+            self.label_in_img.clear()
         except:
             print("close")
 
-    ## 帧率变化函数
+    # 帧率变化函数
     def valueChanged(self):
         # 帧率设置，标签内容重置
         self.timeF = self.hslider_timeF.value()
         self.label_timeF.setText("处理帧率：" + str(self.timeF))
 
-    ## 打开视频文件
+    # 打开视频文件
     def openVideoFile(self):
         # 视频路径处理，去双斜杠\\
         self.url = QFileDialog.getOpenFileUrl()[0].url()[8:].replace('\\', '/')
@@ -99,9 +92,10 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
             self.probar_load.setMaximum(frame_num)
             # 打开视频后初始视频信息设置：打开文件、计数帧
             self.open_flag = True
+            self.camera = False
             self.frame_index = 0
 
-    ## 获取视频信息：视频名称，并写好异常图片保存路径：“./视频名称_result/”
+    # 获取视频信息：视频名称，并写好异常图片保存路径：“./视频名称_result/”
     def get_video_info(self):
         info = self.url.split("/")[-1]
         self.video_name = info.split(".")[0]
@@ -110,26 +104,23 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
             self.init_path = True
         self.video_error_path = self.dir_path + "/" + self.video_name + "_result/"
 
-    ## 绘画事件
+    # 实时摄像头和播放视频共用绘画事件
     def paintEvent(self, a0: QtGui.QPaintEvent):
         start_t = time.time()
         if self.open_flag:
-            # 读帧
-            ret, frame = self.video_stream.read()
-            if ret == True:
+            ret, frame = self.video_stream.read()  # 读帧
+
+            if self.camera:  # 以摄像头形式播放视频时保存
                 self.out.write(frame)
-            self.frame_index = self.frame_index + 1
+            self.frame_index += 1
 
             if not frame is None:
-                # 抽帧处理
-                if self.frame_index % self.timeF == 0:
-                    # 处理当前帧
-                    self.frame = frame
+                if self.frame_index % self.timeF == 0:          # 抽帧处理
+                    self.frame = frame                          # 处理当前帧
                     self.i_processor.process(frame)
-                    # 进度条前进
-                    self.probar_load.setValue(self.frame_index)
-                    # 异常则报错
-                    if (self.i_processor.is_error):
+                    if not self.camera:                         # 非摄像头视频时进度条前进
+                        self.probar_load.setValue(self.frame_index)
+                    if (self.i_processor.is_error):             # 异常则报错
                         self.alarm()
                     else:
                         self.normal()
@@ -173,20 +164,20 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
         self.i_processor.is_error = False
         self.log()
 
-    ## 日志输出，设置日志标签内容
+    # 日志输出，设置日志标签内容
     def log(self):
         pretxt = self.teb_log.toPlainText()
         self.teb_log.setText(pretxt + self.log_info)
 
-    ## 正常状态，设置预警标签颜色
+    # 正常状态，设置预警标签颜色
     def normal(self):
         self.label_is_error.setStyleSheet("background-color: rgb(20,155,20) ")
 
     def open_picture(self):
-        # self.pic_url = QFileDialog.getOpenFileUrl()[0].url()[8:].replace('\\','/')
         self.pic_url = QFileDialog.getOpenFileName(self, "open file dialog")[0]
-        # 打开标注图片窗口
-        self.show_labeling_widget()
+        # 打开进度条上标注图片窗口
+        if self.pic_url:
+            self.show_labeling_widget()
 
     def show_labeling_widget(self):
         self.labeling_ui = Ui_label_img.Ui_MainWindow(self.pic_url)
