@@ -43,6 +43,7 @@ class Ui_MainWindow(QMainWindow):
         self.label.setObjectName("label")
 
         jpg = QtGui.QPixmap(self.img_path).scaled(self.label.width(), self.label.height())
+        self.label.img_path = jpg
         self.label.setPixmap(jpg)
         self.label.setCursor(Qt.CrossCursor)
 

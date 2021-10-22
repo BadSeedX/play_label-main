@@ -1,7 +1,9 @@
 from PyQt5 import QtCore
 from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtGui import QPainter, QPen
-from PyQt5.QtWidgets import QLabel, QWidget
+from PyQt5.QtWidgets import QLabel, QWidget, QMessageBox
+from qtpy import QtGui
+
 from ui import Ui_select_class
 
 
@@ -16,6 +18,8 @@ class MyLabel(QLabel):  # 自定义标签控件
     rect = QRect(0, 0, 0, 0)
     rects = []  # 检测框列表
     labels = []  # 检测框对应的类别列表
+    img_path = ""
+    scale = 1.
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton and not self.drawing_rec:
@@ -38,6 +42,30 @@ class MyLabel(QLabel):  # 自定义标签控件
             self.label_window = Ui_select_class.Ui_MainWindow()
             self.label_window.signal_confirm.connect(self.confirm_emit_slot)
             self.label_window.show()
+        elif event.buttons() == QtCore.Qt.RightButton:
+            # 跳出撤销对话框
+            if self.drawn_rec | self.drawing_rec:
+                undo_message = QMessageBox.information(self, "提示信息", "撤销目标框", QMessageBox.Yes | QMessageBox.Cancel)
+                if undo_message == QMessageBox.Yes:
+                    self.drawn_rec = False                      # undo操作
+                    self.drawing_rec = False
+                    self.update()
+
+    def wheelEvent(self, event):
+        if event.angleDelta().y() > 0:
+            self.scale += 0.1
+            jpg = QtGui.QPixmap(self.img_path).scaled(self.width()*self.scale, self.height()*self.scale)
+            self.setPixmap(jpg)
+            self.update()
+        else:
+
+            if self.scale >= 1.1:
+                print("ok")
+                self.scale -= 0.1
+                jpg = QtGui.QPixmap(self.img_path).scaled(self.width() * self.scale, self.height() * self.scale)
+                self.setPixmap(jpg)
+                self.update()
+
 
     def mouseMoveEvent(self, event):
         if self.drawing_rec:

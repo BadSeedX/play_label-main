@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5 import QtGui
 
-from ui.railway_detection import Ui_MainWindow
+from ui.Ui_railway_detection import Ui_MainWindow
 
 from processor.img_processor import img_processor
 from ui import Ui_label_img
@@ -51,7 +51,9 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
     # 打开摄像头
     def openCamera(self):
         try:
+            self.probar_load.close()
             self.video_stream = cv2.VideoCapture("http://admin:admin@10.2.63.76:8081/")     # 获取摄像头视频
+            # self.video_stream = cv2.VideoCapture(0)                                       # 笔记本摄像头
             self.fourcc = cv2.VideoWriter_fourcc(*'XVID')                                   # 实时视频存储地址
             self.out = cv2.VideoWriter("output.avi", self.fourcc, 30.0, (640, 480))
             # TODO 视频文件默认保存
@@ -83,6 +85,7 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
     def openVideoFile(self):
         # 视频路径处理，去双斜杠\\
         self.url = QFileDialog.getOpenFileUrl()[0].url()[8:].replace('\\', '/')
+        self.probar_load.show()
         if self.url != "":
             # 获取视频信息
             self.get_video_info()
@@ -108,9 +111,9 @@ class myMainWindow(Ui_MainWindow, QMainWindow):
     def paintEvent(self, a0: QtGui.QPaintEvent):
         start_t = time.time()
         if self.open_flag:
-            ret, frame = self.video_stream.read()  # 读帧
+            ret, frame = self.video_stream.read()               # 读帧
 
-            if self.camera:  # 以摄像头形式播放视频时保存
+            if self.camera:                                     # 以摄像头形式播放视频时保存
                 self.out.write(frame)
             self.frame_index += 1
 
