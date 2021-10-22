@@ -1,7 +1,7 @@
 from PyQt5 import QtCore
-from PyQt5.QtCore import QRect, Qt
+from PyQt5.QtCore import QRect, Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QPen
-from PyQt5.QtWidgets import QLabel, QWidget, QMessageBox
+from PyQt5.QtWidgets import QLabel, QWidget, QMessageBox, QScrollArea
 from qtpy import QtGui
 
 from ui import Ui_select_class
@@ -20,6 +20,7 @@ class MyLabel(QLabel):  # 自定义标签控件
     labels = []  # 检测框对应的类别列表
     img_path = ""
     scale = 1.
+    w, h = 960, 540
 
     def mousePressEvent(self, event):
         if event.buttons() == QtCore.Qt.LeftButton and not self.drawing_rec:
@@ -52,18 +53,18 @@ class MyLabel(QLabel):  # 自定义标签控件
                     self.update()
 
     def wheelEvent(self, event):
-        if event.angleDelta().y() > 0:
+        if event.angleDelta().y() > 0:                          # 图片放大
             self.scale += 0.1
-            jpg = QtGui.QPixmap(self.img_path).scaled(self.width()*self.scale, self.height()*self.scale)
+            jpg = QtGui.QPixmap(self.img_path).scaled(self.w * self.scale, self.h * self.scale)
             self.setPixmap(jpg)
+            self.adjustSize()
             self.update()
-        else:
-
+        else:                                                   # 图片缩小
             if self.scale >= 1.1:
-                print("ok")
                 self.scale -= 0.1
-                jpg = QtGui.QPixmap(self.img_path).scaled(self.width() * self.scale, self.height() * self.scale)
+                jpg = QtGui.QPixmap(self.img_path).scaled(self.w * self.scale, self.h * self.scale)
                 self.setPixmap(jpg)
+                self.adjustSize()
                 self.update()
 
 

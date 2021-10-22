@@ -10,10 +10,10 @@ import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QPainter, QPen, QImage, QPixmap
-from PyQt5.QtWidgets import QFileDialog, QLabel, QMainWindow
+from PyQt5.QtWidgets import QFileDialog, QLabel, QMainWindow, QScrollArea
 
 from dao.label import MyLabel
-
+from dao.scroll import MyScroll
 
 class Ui_MainWindow(QMainWindow):
     def __init__(self, url):
@@ -39,7 +39,7 @@ class Ui_MainWindow(QMainWindow):
         self.label = MyLabel(self)
         self.label.setGeometry(QtCore.QRect(70, 70, 960, 540))
         self.label.setMinimumSize(QtCore.QSize(960, 540))
-        self.label.setMaximumSize(QtCore.QSize(960, 540))
+        self.label.setMaximumSize(QtCore.QSize(1920, 1080))
         self.label.setObjectName("label")
 
         jpg = QtGui.QPixmap(self.img_path).scaled(self.label.width(), self.label.height())
@@ -47,9 +47,15 @@ class Ui_MainWindow(QMainWindow):
         self.label.setPixmap(jpg)
         self.label.setCursor(Qt.CrossCursor)
 
+        self.scrollArea = MyScroll(self)
+        # self.scrollArea = QtWidgets.QScrollArea(self.centralwidget)
+        self.scrollArea.setGeometry(QtCore.QRect(70, 70, 959, 539))
+        self.scrollArea.setObjectName("scrollArea")
+        self.scrollArea.setWidget(self.label)
+
+
         self.pushButton.clicked.connect(self.save_sample)
         self.pushButton_2.clicked.connect(self.back)
-
 
 
         self.retranslateUi(MainWindow)
@@ -87,3 +93,4 @@ class Ui_MainWindow(QMainWindow):
         self.label.rects.clear()            # 清空目标框，标签列表
         self.label.labels.clear()
         self.close()
+
